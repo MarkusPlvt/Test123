@@ -1,0 +1,182 @@
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.5'
+}
+
+group 'de.hhn.seb.kprog'
+version '1.0-SNAPSHOT'
+
+
+wrapper {
+    gradleVersion = '6.6.1'
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+javafx {
+    version = "11"
+    modules = [ 'javafx.controls', 'javafx.fxml', 'javafx.media' ]
+}
+
+application {
+    mainClassName = "prog.javafx.main.KprogGuiWithJavaFx"
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.testng:testng:6.14.3'
+    implementation 'org.testng:testng:6.14.3'
+    implementation 'junit:junit:4.12'
+    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.24'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
+    // https://mvnrepository.com/artifact/junit/junit
+    testCompile group: 'junit', name: 'junit', version: '4.13'
+    // https://mvnrepository.com/artifact/org.testfx/testfx-core
+    testCompile group: 'org.testfx', name: 'testfx-core', version: '4.0.16-alpha'
+    // https://mvnrepository.com/artifact/org.testfx/testfx-junit
+    testCompile group: 'org.testfx', name: 'testfx-junit', version: '4.0.15-alpha'
+}
+
+checkstyle {
+    toolVersion = "8.36"
+    configFile = file('etc/google_checks.xml')
+    showViolations = false
+    checkstyleTest.enabled = false
+}
+
+task ex01Zip(type: Zip){
+    archiveFileName = "ex01Solution.zip"
+    destinationDirectory = file ("${rootDir}/zipfiles")
+    from  fileTree('src/main/java/prog/ex01')
+    into('prog/ex01')
+}
+
+task ex10Zip4Ilias(type: Zip){
+    archiveFileName = "ex10Solution.zip"
+    destinationDirectory = file ("${rootDir}/zipfiles")
+    from  fileTree('src/main/')
+    into('src/main')
+}
+task ex11Zip4Ilias(type: Zip){
+    archiveFileName = "ex11 enlarged - Markus Kübler.zip"
+    destinationDirectory = file ("${rootDir}/zipfiles")
+    from  fileTree('src/main/java/prog/ex11')
+    into('src/ex11')
+}
+task ex12Zip4Ilias(type: Zip){
+    archiveFileName = "ex12 enlarged - Markus Kübler.zip"
+    destinationDirectory = file ("${rootDir}/zipfiles")
+    from  fileTree('src/main/java/prog/ex12')
+    into('src/ex12')
+}
+task ex13Zip4Ilias(type: Zip){
+    archiveFileName = "ex13 - Markus Kübler.zip"
+    destinationDirectory = file ("${rootDir}/zipfiles")
+    from  fileTree('src/main/java/prog/ex13')
+    into('src/ex13')
+}
+task ex14Zip(type: Zip){
+    archiveFileName = "ex14Solution testtest.zip"
+    destinationDirectory = file ("${rootDir}/zipfiles")
+    from  fileTree('src/main/java/prog/ex14')
+    into('prog/ex14')
+}
+task ex15Zip(type: Zip){
+    archiveFileName = "ex15 - Markus Kübler.zip"
+    destinationDirectory = file ("${rootDir}/zipfiles")
+    from  fileTree('src/main/java/prog/ex15')
+    into('prog/ex15')
+}
+
+ext {
+    if (!project.hasProperty('exid')) {
+        exid = 'ex06'
+    }
+}
+
+// generic task to zip
+// call it, e.g. for ex11, with "gradle -Pexid=ex11 zipEx"
+task zipEx(type: Zip){
+    archiveFileName = exid + "Solution.zip"
+    destinationDirectory = file ("${rootDir}/zipfiles")
+    from  fileTree('src/main/java/prog/'+ exid)
+    into('prog/' + exid)
+}
+
+/**
+ * Only to be used for teaching staff
+ */
+task swapSolution(type: Copy){
+    if(project.getProperties().get("student") && project.getProperties().get("exercise")) {
+        boolean exerciseFound = false
+        boolean duplicate = false
+        new File("${rootDir}/Abgaben").eachDir { file ->
+            if (file.name.toString().matches("(.*)" + project.getProperties().get("student") + "(.*)")) {
+                def exDir = new File("${rootDir}/src/main/java/prog/" + project.getProperties().get("exercise"))
+                logger.lifecycle("Trying to delete " + exDir);
+                delete exDir
+                logger.lifecycle("Deleted " + exDir);
+                String exercisePath = "${rootDir}/Abgaben/" + file.name.toString() + "/" + project.getProperties().get("exercise") + "Solution.zip";
+                from zipTree(exercisePath)
+                logger.lifecycle("Copy exercise from: " + exercisePath);
+                into "${rootDir}/src/main/java/"
+                logger.lifecycle("Into: " + new File("${rootDir}/src/main/java"));
+                if (exerciseFound) {
+                    duplicate = true
+                } else {
+                    exerciseFound = true
+                }
+                if (duplicate) {
+                    throw new GradleException("Multiple exercises were found with the given parameters!")
+                }
+            }
+        }
+        if (!exerciseFound) {
+            throw new GradleException("No exercise could be found with the given parameters!")
+        }
+    }
+}
+
+
+task bigSwapEx10(type: Copy){
+    if(project.getProperties().get("student")) {
+        boolean exerciseFound = false
+        boolean duplicate = false
+        new File("${rootDir}/Abgaben").eachDir { file ->
+            if (file.name.toString().matches("(.*)" + project.getProperties().get("student") + "(.*)")) {
+                def exDir = new File("${rootDir}/src/main/java")
+                logger.lifecycle("Trying to delete " + exDir);
+                delete exDir
+                logger.lifecycle("Deleted " + exDir);
+                String exercisePath = "${rootDir}/Abgaben/" + file.name.toString() + "/" +
+                        "ex10Solution.zip";
+                from zipTree(exercisePath)
+                logger.lifecycle("Copy exercise from: " + exercisePath);
+                into "${rootDir}"
+                logger.lifecycle("Into: " + new File("${rootDir}"));
+                if (exerciseFound) {
+                    duplicate = true
+                } else {
+                    exerciseFound = true
+                }
+                if (duplicate) {
+                    throw new GradleException("Multiple exercises were found with the given parameters!")
+                }
+            }
+        }
+        if (!exerciseFound) {
+            throw new GradleException("No exercise could be found with the given parameters!")
+        }
+    }
+}
+
